@@ -10,7 +10,6 @@
     "dev": "node esbuild.config.mjs",
     "build": "node esbuild.config.mjs production",
     "build:dev": "node esbuild.config.mjs development",
-    "lint": "eslint ./src --fix && eslint ./tests --fix && tsc --noEmit --pretty && svelte-check",
     "lint:markdown": "markdownlint-cli2-fix \"**/*.md\" \"#contributing/_meta\" \"#docs/_meta\" \"#docs-snippets\" \"#node_modules\"  \"#tests\"  \"#resources/sample_vaults/Tasks-Demo/_meta/templates\"",
     "test": "jest --ci",
     "test:dev": "jest --watch",

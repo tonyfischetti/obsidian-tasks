@@ -9,4 +9,5 @@ export interface TasksApiV1 {
      * an empty string, if data entry was cancelled.
      */
     createTaskLineModal(): Promise<string>;
+    editTaskLineModal(string, number): Promise<string>;
 }

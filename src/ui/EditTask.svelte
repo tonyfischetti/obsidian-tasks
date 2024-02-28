@@ -365,6 +365,8 @@
 
     const _onSubmit = async () => {
         // NEW_TASK_FIELD_EDIT_REQUIRED
+        const originalStatus = task.status;
+        const originalDoneDate = task.doneDate;
         let description = editableTask.description.trim();
         if (addGlobalFilterOnSave) {
             description = GlobalFilter.getInstance().prependTo(description);
@@ -430,6 +432,20 @@
             addedBlocking = editableTask.blocking.filter(task => !originalBlocking.includes(task))
         }
 
+        let newDoneDate = originalDoneDate;
+
+        if (!originalStatus.isCompleted() &&
+             editableTask.status.isCompleted())
+            newDoneDate = new TasksDate(window.moment()).formatAsDate();
+        else if ( originalStatus.isCompleted() &&
+                 !editableTask.status.isCompleted())
+            newDoneDate = null;
+
+        // console.log(`originalStatus: ${originalStatus}`);
+        // console.log(`originalDoneDate: ${originalDoneDate}`);
+        // console.log(`status now: ${editableTask.status.configuration.type}`);
+        // console.log(`newDoneDate: ${newDoneDate}`);
+
         const updatedTask = new Task({
             // NEW_TASK_FIELD_EDIT_REQUIRED
             ...task,
@@ -440,7 +456,7 @@
             startDate,
             scheduledDate,
             dueDate,
-            doneDate,
+            doneDate: newDoneDate,
             createdDate,
             cancelledDate,
             dependsOn: blockedByWithIds.map(task => task.id),
@@ -510,31 +526,10 @@
         </div>
 
         <!-- --------------------------------------------------------------------------- -->
-        <!--  Recurrence  -->
+        <!--  Recurrence and Dates  -->
         <!-- --------------------------------------------------------------------------- -->
         <div class="tasks-modal-section tasks-modal-dates">
-            <!-- --------------------------------------------------------------------------- -->
-            <!--  Recurrence  -->
-            <!-- --------------------------------------------------------------------------- -->
-            <label for="recurrence" class="accesskey-first">Recurs</label>
-            <!-- svelte-ignore a11y-accesskey -->
-            <input
-                bind:value={editableTask.recurrenceRule}
-                id="recurrence"
-                type="text"
-                class:tasks-modal-error={!isRecurrenceValid}
-                class="input"
-                placeholder="Try 'every 2 weeks on Thursday'."
-                accesskey={accesskey("r")}
-            />
-            <code class="results">{recurrenceSymbol} {@html parsedRecurrence}</code>
-        </div>
 
-        <!-- --------------------------------------------------------------------------- -->
-        <!--  Dates  -->
-        <!-- --------------------------------------------------------------------------- -->
-        <hr>
-        <div class="tasks-modal-section tasks-modal-dates">
             <!-- --------------------------------------------------------------------------- -->
             <!--  Due Date  -->
             <!-- --------------------------------------------------------------------------- -->
@@ -551,83 +546,10 @@
             />
             <code class="results">{dueDateSymbol} {@html parsedDueDate}</code>
 
-            <!-- --------------------------------------------------------------------------- -->
-            <!--  Scheduled Date  -->
-            <!-- --------------------------------------------------------------------------- -->
-            <label for="scheduled" class="accesskey-first">Scheduled</label>
-            <!-- svelte-ignore a11y-accesskey -->
-            <input
-                bind:value={editableTask.scheduledDate}
-                id="scheduled"
-                type="text"
-                class:tasks-modal-error={!isScheduledDateValid}
-                class="input"
-                placeholder={datePlaceholder}
-                accesskey={accesskey("s")}
-            />
-            <code class="results">{scheduledDateSymbol} {@html parsedScheduledDate}</code>
-
-            <!-- --------------------------------------------------------------------------- -->
-            <!--  Start Date  -->
-            <!-- --------------------------------------------------------------------------- -->
-            <label for="start">St<span class="accesskey">a</span>rt</label>
-            <!-- svelte-ignore a11y-accesskey -->
-            <input
-                bind:value={editableTask.startDate}
-                id="start"
-                type="text"
-                class:tasks-modal-error={!isStartDateValid}
-                class="input"
-                placeholder={datePlaceholder}
-                accesskey={accesskey("a")}
-            />
-            <code class="results">{startDateSymbol} {@html parsedStartDate}</code>
-
-            <!-- --------------------------------------------------------------------------- -->
-            <!--  Only future dates  -->
-            <!-- --------------------------------------------------------------------------- -->
-            <div>
-                <label for="forwardOnly">Only
-                    <span class="accesskey-first">future</span> dates:</label>
-                <!-- svelte-ignore a11y-accesskey -->
-                <input
-                    bind:checked={editableTask.forwardOnly}
-                    id="forwardOnly"
-                    type="checkbox"
-                    class="input task-list-item-checkbox tasks-modal-checkbox"
-                    accesskey={accesskey("f")}
-                />
-            </div>
-        </div>
-
-        <!-- --------------------------------------------------------------------------- -->
-        <!--  Dependencies  -->
-        <!-- --------------------------------------------------------------------------- -->
-        <hr>
-        <div class="tasks-modal-section tasks-modal-dates">
-            {#if allTasks.length > 0 && mountComplete}
-                <!-- --------------------------------------------------------------------------- -->
-                <!--  Blocked By Tasks  -->
-                <!-- --------------------------------------------------------------------------- -->
-                <label for="blockedBy" class="accesskey-first">Before this</label>
-                <Dependency type="blockedBy" task={task} editableTask={editableTask} allTasks={allTasks}
-                            _onDescriptionKeyDown={_onDescriptionKeyDown} accesskey={accesskey} accesskeyLetter="b" placeholder='Search for tasks you need to do before this task' />
-
-                <!-- --------------------------------------------------------------------------- -->
-                <!--  Blocking Tasks  -->
-                <!-- --------------------------------------------------------------------------- -->
-                <label for="blocking" class="accesskey-first">After this</label>
-                <Dependency type="blocking" task={task} editableTask={editableTask} allTasks={allTasks}
-                            _onDescriptionKeyDown={_onDescriptionKeyDown} accesskey={accesskey} accesskeyLetter="A" placeholder='Search for tasks you need to do after this task' />
-            {:else}
-                <div><i>Blocking and blocked by fields are disabled when vault tasks is empty</i></div>
-            {/if}
-        </div>
 
         <!-- --------------------------------------------------------------------------- -->
         <!--  Status  -->
         <!-- --------------------------------------------------------------------------- -->
-        <hr>
         <div class="tasks-modal-section">
             <label for="status">Stat<span class="accesskey">u</span>s</label>
             <!-- svelte-ignore a11y-accesskey -->
@@ -639,9 +561,6 @@
                     <option value={status}>{status.name} [{status.symbol}]</option>
                 {/each}
             </select>
-            <!-- svelte-ignore a11y-label-has-associated-control -->
-            <label class="tasks-modal-warning">⚠️ Changing the status does not yet auto-update Done or Cancelled Dates, nor create a new recurrence.
-                Complete tasks via command, by clicking on task checkboxes or by right-clicking on task checkboxes.</label>
         </div>
 
         <div class="tasks-modal-section tasks-modal-status">
@@ -664,6 +583,7 @@
             <!-- --------------------------------------------------------------------------- -->
             <!--  Created Date  -->
             <!-- --------------------------------------------------------------------------- -->
+            <!--
             <label for="created">Created</label>
             <input
                 bind:value={editableTask.createdDate}
@@ -674,10 +594,12 @@
                 placeholder={datePlaceholder}
             />
             <code class="results">{createdDateSymbol} {@html parsedCreatedDate}</code>
+            -->
 
             <!-- --------------------------------------------------------------------------- -->
             <!--  Done Date  -->
             <!-- --------------------------------------------------------------------------- -->
+            <!--
             <label for="done">Done</label>
             <input
                 bind:value={editableTask.doneDate}
@@ -688,10 +610,12 @@
                 placeholder={datePlaceholder}
             />
             <code class="results">{doneDateSymbol} {@html parsedDoneDate}</code>
+            -->
 
             <!-- --------------------------------------------------------------------------- -->
             <!--  Cancelled Date  -->
             <!-- --------------------------------------------------------------------------- -->
+            <!--
             <label for="cancelled">Cancelled</label>
             <input
                 bind:value={editableTask.cancelledDate}
@@ -702,6 +626,7 @@
                 placeholder={datePlaceholder}
             />
             <code class="results">{cancelledDateSymbol} {@html parsedCancelledDate}</code>
+            -->
         </div>
 
         <div class="tasks-modal-section tasks-modal-buttons">
