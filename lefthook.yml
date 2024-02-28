@@ -1,8 +1,0 @@
-pre-push:
-  parallel: true
-  commands:
-    build:
-      run: yarn build
-    test:
-      run: yarn test
-
