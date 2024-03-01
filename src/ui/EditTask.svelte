@@ -538,7 +538,7 @@
             <input
                 bind:value={editableTask.dueDate}
                 id="due"
-                type="text"
+                type="date"
                 class="input"
                 class:tasks-modal-error={!isDueDateValid}
                 placeholder={datePlaceholder}
