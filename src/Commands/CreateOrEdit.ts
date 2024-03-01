@@ -11,13 +11,11 @@ export const createOrEdit = (checking: boolean, editor: Editor, view: View, app:
         return view instanceof MarkdownView;
     }
 
-    // /* TODO: put back
     if (!(view instanceof MarkdownView)) {
         // Should never happen due to check above.
         // console.log(`should never happen`);
         return;
     }
-    // */
 
     const path = view.file?.path;
     if (path === undefined) {
